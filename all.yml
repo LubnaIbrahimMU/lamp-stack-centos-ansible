@@ -1,0 +1,6 @@
+####MYSQL
+mysql_root_password: pass@123#
+mysql_database: wordpressapp
+mysql_user: lu
+mysql_password: pass@123
+mysql_socket: "/var/lib/mysql/mysql.sock" 

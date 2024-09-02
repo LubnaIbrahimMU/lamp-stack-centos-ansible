@@ -1,0 +1,9 @@
+- name: Lamp-stack
+  hosts: web
+  remote_user: lu
+  become: yes
+  become_method: sudo
+  vars:
+    ansible_ssh_common_args: "-o StrictHostKeyChecking=no"
+  roles: 
+   - Lamp-stack

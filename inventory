@@ -1,0 +1,2 @@
+[web]
+144.217.129.124 ansible_user=lu ansible_ssh_private_key_file=~/.ssh/id3am

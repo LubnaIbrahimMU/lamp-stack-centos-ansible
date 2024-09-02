@@ -1,0 +1,19 @@
+---
+# handlers file for Lamp-stack
+
+
+
+- name: Restart PHP-FPM
+  service:
+    name: php-fpm
+    state: restarted
+
+- name: reload firewalld
+  service:
+    name: firewalld
+    state: reloaded
+
+- name: Restart MySQL
+  service:
+    name: mysql
+    state: restarted

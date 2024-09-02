@@ -1,0 +1,1 @@
+ansible-playbook -i inventory lamp.yml -e "@all.yml"

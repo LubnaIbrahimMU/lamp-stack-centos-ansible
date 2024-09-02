@@ -1,0 +1,232 @@
+---
+# tasks file for Lamp-stack
+- name: Update all packages
+  dnf:
+    name: '*'
+    state: latest
+
+- name: Install Apache
+  dnf:
+    name: httpd
+    state: present
+
+- name: Start and enable Apache
+  service:
+    name: httpd
+    state: started
+    enabled: yes
+
+- name: Install EPEL repository
+  dnf:
+    name: epel-release
+    state: present
+
+- name: Install Remi repository (for PHP 8.2)
+  dnf:
+    name: http://rpms.remirepo.net/enterprise/remi-release-8.rpm
+    state: present
+    disable_gpg_check: yes
+
+- name: Ensure Remi PHP 8.2 module is enabled
+  shell: |
+    dnf module reset php -y
+    dnf module enable php:remi-8.2 -y
+  args:
+    executable: /bin/bash
+  when: ansible_distribution == 'AlmaLinux' and ansible_distribution_major_version == '8'
+
+- name: Clean DNF cache
+  dnf:
+    name: '*'
+    state: latest
+    update_cache: yes
+
+- name: Install required packages
+  dnf:
+    name:
+      - php
+      - php-fpm
+      - php-mysqlnd
+      - php-xml
+      - php-dom          
+      - php-cli
+      - git
+      - unzip
+      - curl
+      - mysql-server
+    state: present
+  notify:
+    - Restart PHP-FPM
+
+- name: Ensure PHP-FPM service is enabled and started
+  systemd:
+    name: php-fpm
+    enabled: yes
+    state: started
+
+
+- name: Install pip3 (if not already installed)
+  package:
+    name: python3-pip
+    state: present
+
+- name: Install firewall library using pip3
+  pip:
+    name: firewall
+    state: present
+
+- name: Ensure firewalld is installed
+  package:
+    name: firewalld
+    state: present
+
+- name: Start and enable firewalld
+  systemd:
+    name: firewalld
+    state: started
+    enabled: yes
+
+- name: Configure firewalld to allow HTTP and HTTPS traffic
+  firewalld:
+    service: "{{ item }}"
+    state: enabled
+    permanent: yes
+  loop:
+    - http
+    - https
+
+- name: Reload firewalld to apply changes
+  command: firewall-cmd --reload
+
+
+###########################MYSQL#######################
+
+
+
+- name: Install MySQL development libraries
+  package:
+    name: mysql-devel
+    state: present
+
+- name: Install Python development package
+  package:
+    name: python3-devel
+    state: present
+
+- name: Install development tools
+  package:
+    name: gcc
+    state: present
+
+- name: Install pip3 (if not already installed)
+  package:
+    name: python3-pip
+    state: present
+
+- name: Install mysqlclient library
+  pip:
+    name: mysqlclient
+    state: present
+
+- name: Ensure MySQL is installed
+  package:
+    name: mysql-server
+    state: present
+
+- name: Start and enable MySQL service
+  systemd:
+    name: mysqld
+    state: started
+    enabled: yes
+
+
+
+
+- name: Create .my.cnf file
+  template:
+    src: my.cnf.j2
+    dest: ~/.my.cnf
+    owner: root
+    group: root
+    mode: '0600'
+  notify: Restart MySQL
+
+
+
+
+# - name: Remove anonymous users
+#   mysql_user:
+#     name: ''
+#     host_all: true
+#     state: absent
+#     login_user: root
+#     login_password: "{{ mysql_root_password }}"
+#   delegate_to: localhost
+
+####
+# - name: Removes all anonymous user accounts
+#   mysql_user:
+#     name: ''
+#     host_all: true
+#     login_user: root
+#     login_password: "{{ mysql_root_password }}"
+#     state: absent
+#     column_case_sensitive: false 
+#####
+
+
+# - name: Create MySQL database
+#   mysql_db:
+#     name: "{{ mysql_database }}"
+#     state: present
+
+# - name: Create MySQL user
+#   mysql_user:
+#     name: "{{ mysql_user }}"
+#     password: "{{ mysql_password }}"
+#     priv: "{{ mysql_database }}.*:ALL"
+#     state: present
+#     column_case_sensitive: false
+
+
+
+
+##
+
+# - name: Remove anonymous user account for localhost
+#   mysql_user:
+#     name: ''
+#     host: localhost
+#     login_user: root
+#     login_password: "{{ mysql_root_password }}"
+#     state: absent
+#     login_unix_socket: /var/lib/mysql/mysql.sock
+#     column_case_sensitive: false
+
+# - name: Remove all anonymous user accounts
+#   mysql_user:
+#     name: ''
+#     host_all: true
+#     login_user: root
+#     login_password: "{{ mysql_root_password }}"
+#     state: absent
+#     column_case_sensitive: false
+
+# - name: Create MySQL database
+#   mysql_db:
+#     name: "{{ mysql_database }}"
+#     state: present
+#     login_user: root
+#     login_password: "{{ mysql_root_password }}"
+#     login_unix_socket: "{{ mysql_socket }}"
+
+# - name: Create MySQL user
+#   mysql_user:
+#     name: "{{ mysql_user }}"
+#     password: "{{ mysql_password }}"
+#     priv: "{{ mysql_database }}.*:ALL"
+#     state: present
+#     column_case_sensitive: false
+#     login_user: root
+#     login_password: "{{ mysql_root_password }}"
+#     login_unix_socket: "{{ mysql_socket }}"
